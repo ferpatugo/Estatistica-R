@@ -1,0 +1,119 @@
+# Selecionando a amostra das sépalas
+a0 <- iris$Sepal.Length
+
+# Contando a quantidade de elementos
+length(a0)
+
+# Ordenando valores
+sort(a0)
+
+# Amplitude amostral
+h0 <- diff(range(a0))
+
+# Variância e desvio padrão amostral
+var0 <- var(a0)
+sd0 <- sd(a0)
+
+# Conferindo raiz da variância
+sqrt(var0)
+
+# Média ± 2 desvios
+mean(a0) - 2*sd0
+mean(a0) + 2*sd0
+
+# Coeficiente de variação (%)
+cv0 <- sd0 / mean(a0) * 100
+
+# Amostra 1: pétalas
+a1 <- iris$Petal.Length
+sort(a1)
+h1 <- diff(range(a1))
+
+# Amplitude pelo tidyverse
+library(dplyr)
+a1 %>% range() %>% diff() 
+
+# Variância, desvio padrão, média ± 2 desvios
+var1 <- var(a1)
+sd1 <- sd(a1)
+mean(a1) - 2*sd1
+mean(a1) + 2*sd1
+
+# Coeficiente de variação (%)
+cv1 <- sd1 / mean(a1) * 100
+
+# Consolidando resultados
+dados_a0_consolidados <- data.frame(
+  "amplitude" = h0,
+  "variancia" = var0,
+  "desvio_padrao" = sd0,
+  "media" = mean(a0),
+  "coeficente_variacao" = cv0
+)
+
+dados_a1_consolidados <- data.frame(
+  "amplitude" = h1,
+  "variancia" = var1,
+  "desvio_padrao" = sd1,
+  "media" = mean(a1),
+  "coeficente_variacao" = cv1
+)
+
+consolidado_comparativo <- data.frame(
+  t(dados_a0_consolidados),
+  t(dados_a1_consolidados)
+)
+
+colnames(consolidado_comparativo) <- c("resumo_tamanhho_Sepala", "resumo_tamanhho_Petala")
+
+consolidado_comparativo
+
+# Comparando graficamente
+par(mfrow=c(1,2))
+plot(a0, ylim = c(1, 7), col=iris$Species)
+abline(h=mean(a0))
+abline(h=mean(a0) - 2*sd0)
+abline(h=mean(a0) + 2*sd0)
+
+plot(a1, col=iris$Species)
+abline(h=mean(a1))
+abline(h=mean(a1) - 1.5*sd1)
+abline(h=mean(a1) + 1.5*sd1)
+
+# Ótica Tidyverse — Consolida Sepalas
+dados_sepala <- iris %>%
+  summarise(
+    media0 = mean(Sepal.Length),
+    h0 = diff(range(Sepal.Length)),
+    var0 = var(Sepal.Length),
+    sd0 = sd(Sepal.Length),
+    cv0 = sd0 / media0 * 100
+  )
+
+dados_sepala
+
+# Consolida Pétalas
+dados_petala <- iris %>%
+  summarise(
+    media1 = mean(Petal.Length),
+    h1 = diff(range(Petal.Length)),
+    var1 = var(Petal.Length),
+    sd1 = sd(Petal.Length),
+    cv1 = sd1 / media1 * 100
+  )
+
+dados_petala
+
+# EXEMPLO DESAFIO: Carteiras de ações
+a <- c(50, 60, 70)
+b <- c(-20, 140)
+
+# Medidas resumo
+mean(a)
+mean(b)
+median(a)
+median(b)
+sd_a <- sd(a)
+sd_b <- sd(b)
+sd_a / mean(a) * 100
+sd_b / mean(b) * 100
