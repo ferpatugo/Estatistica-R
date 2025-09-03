@@ -1,0 +1,44 @@
+
+vetor_pacotes <- c(
+  "dplyr",
+  "kableExtra",
+)
+# install.packages(vetor_pacotes)  # Instala todos de uma vez, se necessário
+
+# Carregamento dos pacotes
+invisible(lapply(vetor_pacotes, require, character.only = TRUE))
+
+# Criando o vetor idade (segunda forma mais compacta)
+idade <- c(rep(10, 4), rep(30, 8), rep(50, 4), rep(70, 3), 90)
+
+# Frequência simples
+frequencia_simples <- table(idade)
+
+# Criando data.frame com frequências
+dados_simples <- data.frame(frequencia_simples)
+
+# Frequência acumulada
+dados_simples$frequencia_acumulada <- cumsum(dados_simples$Freq)
+
+# Frequência relativa simples
+dados_simples$frequencia_relativa_simples <- dados_simples$Freq / sum(dados_simples$Freq)
+
+# Frequência relativa acumulada
+dados_simples$frequencia_relativa_acumulada <- cumsum(dados_simples$frequencia_relativa_simples)
+
+# Visualização da tabela com kable
+kable(dados_simples)
+
+# Pipeline tidyverse para recalcular as frequências e facilitar manipulação
+dados_simples_tidy <- dados_simples %>%
+  mutate(
+    frequencia_acumulada = cumsum(Freq),
+    frequencia_relativa_simples = Freq / sum(Freq),
+    frequencia_relativa_acumulada = cumsum(frequencia_relativa_simples)
+  )
+
+# Visualizar tabela tidy
+kable(dados_simples_tidy)
+
+# Exportar o resultado para arquivo CSV
+write.csv2(dados_simples_tidy, "frequencias_idade.csv", row.names = FALSE)
