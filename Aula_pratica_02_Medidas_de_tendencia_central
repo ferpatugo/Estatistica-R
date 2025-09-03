@@ -1,0 +1,165 @@
+# Evitando notação científica
+options(scipen = 999)
+
+# Instalando e carregando bibliotecas necessárias (descomente se necessário)
+# install.packages("e1071")
+# install.packages("DescTools")
+# install.packages("Hmisc")
+# install.packages("dplyr")
+
+require(e1071)      # Para skewness e kurtosis
+library(DescTools)  # Para moda (Mode)
+library(Hmisc)      # Para describe
+library(dplyr)      # Para ótica tidyverse
+
+#------------------
+# Amostra Empresa A
+#------------------
+
+a <- c(2000, 3000, 4000, 9000)
+
+# Desvios à média
+desvio1 <- 2000 - 4500
+desvio2 <- 3000 - 4500
+desvio3 <- 4000 - 4500
+desvio4 <- 9000 - 4500
+soma_desvios_media <- sum(desvio1, desvio2, desvio3, desvio4)
+soma_desvios_media
+
+# Medidas resumo
+media_a <- mean(a)
+mediana_a <- median(a)
+moda_a <- DescTools::Mode(a)
+cbind(media_a, mediana_a, moda_a)
+
+summary(a)
+Hmisc::describe(a)
+
+# Histograma e densidade
+par(mfrow = c(1, 2))
+hist(a)
+hist(a, probability = TRUE)
+lines(density(a))
+
+# Assimetria e curtose
+assimetria_a <- skewness(a)
+curtose_a <- kurtosis(a)
+cbind(assimetria_a, curtose_a)
+
+dados_a_consolidados <- data.frame(
+  "moda" = moda_a,
+  "mediana" = mediana_a,
+  "media" = media_a,
+  "assimetria" = assimetria_a,
+  "curtose" = curtose_a
+)
+
+#------------------
+# Amostra Empresa B
+#------------------
+
+b <- c(2000, 3000, 3000, 3000, 3000, 3000, 4000, 7000, 9000)
+media_b <- mean(b)
+mediana_b <- median(b)
+moda_b <- DescTools::Mode(b)
+cbind(media_b, mediana_b, moda_b)
+
+summary(b)
+Hmisc::describe(b)
+
+par(mfrow = c(1, 2))
+hist(b)
+hist(b, probability = TRUE)
+lines(density(b))
+
+assimetria_b <- skewness(b)
+curtose_b <- kurtosis(b)
+cbind(assimetria_b, curtose_b)
+
+dados_b_consolidados <- data.frame(
+  "moda" = moda_b,
+  "mediana" = mediana_b,
+  "media" = media_b,
+  "assimetria" = assimetria_b,
+  "curtose" = curtose_b
+)
+
+#------------------
+# Amostra Empresa C
+#------------------
+
+c <- c(2000, 3000, 4000, 6000, 7000, 7000, 8000, 9000)
+media_c <- mean(c)
+mediana_c <- median(c)
+moda_c <- DescTools::Mode(c)
+cbind(media_c, mediana_c, moda_c)
+
+summary(c)
+Hmisc::describe(c)
+
+par(mfrow = c(1, 2))
+hist(c)
+hist(c, probability = TRUE)
+lines(density(c))
+
+assimetria_c <- skewness(c)
+curtose_c <- kurtosis(c)
+cbind(assimetria_c, curtose_c)
+
+dados_c_consolidados <- data.frame(
+  "moda" = moda_c,
+  "mediana" = mediana_c,
+  "media" = media_c,
+  "assimetria" = assimetria_c,
+  "curtose" = curtose_c
+)
+
+#-------------------------------
+# Medidas resumo - Ótica tidyverse
+#-------------------------------
+
+# Empresa A
+a.df <- data.frame(a)
+a.df_resumo <- a.df %>%
+  summarise(
+    moda_a = Mode(a),
+    mediana_a = median(a),
+    media_a = mean(a),
+    assimetria_a = skewness(a),
+    curtose_a = kurtosis(a)
+  )
+
+# Empresa B
+b.df <- data.frame(b)
+b.df_resumo <- b.df %>%
+  summarise(
+    moda_b = Mode(b),
+    mediana_b = median(b),
+    media_b = mean(b),
+    assimetria_b = skewness(b),
+    curtose_b = kurtosis(b)
+  )
+
+# Empresa C
+c.df <- data.frame(c)
+c.df_resumo <- c.df %>%
+  summarise(
+    moda_c = Mode(c),
+    mediana_c = median(c),
+    media_c = mean(c),
+    assimetria_c = skewness(c),
+    curtose_c = kurtosis(c)
+  )
+
+# Concatenando tudo
+consolidado_empresas <- data.frame(t(a.df_resumo), t(b.df_resumo), t(c.df_resumo))
+colnames(consolidado_empresas) <- c("resumo_empresa_a", "resumo_empresa_b", "resumo_empresa_c")
+rownames(consolidado_empresas) <- c("Moda", "Mediana", "Media", "Assimetria", "Curtose")
+
+#------------------
+# Exemplo JPMORGAN
+#------------------
+mediana_jpmorgan_exemplo <- c(16,18,19,20,21,23,28,30,32,33,33,47)
+length(mediana_jpmorgan_exemplo)
+mean(mediana_jpmorgan_exemplo)
+median(mediana_jpmorgan_exemplo)
