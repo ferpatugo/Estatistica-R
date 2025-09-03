@@ -1,0 +1,86 @@
+
+# -------------------------------
+# Intervalos de Confiança e Tamanho de Amostra — R Prática
+# -------------------------------
+
+# Exemplo 1: IC para média (sigma conhecido)
+n  <- 64
+Xbarra <- 45
+alfa <- 0.05
+sigma <- 4
+zalfa_sobre_2 <- qnorm(1 - alfa/2)
+E <- zalfa_sobre_2 * sigma / sqrt(n)
+ic_inf <- Xbarra - E
+ic_sup <- Xbarra + E
+ic1 <- cbind(ic_inf, ic_sup); ic1
+
+# Exemplo 2: IC para média (sigma conhecido), outro caso
+n  <- 400
+Xbarra <- 12.52
+alfa <- 0.05
+sigma <- 5
+zalfa_sobre_2 <- qnorm(1 - alfa/2)
+E <- round(zalfa_sobre_2, 2) * sigma / sqrt(n)
+ic_inf <- Xbarra - E
+ic_sup <- Xbarra + E
+ic2 <- cbind(ic_inf, ic_sup); ic2
+
+# Exemplo 3: IC para média (sigma desconhecido, n >= 30)
+n <- 53
+Xbarra <- 0.5250
+alfa <- 0.05
+s <- 0.3486
+zalfa_sobre_2 <- qnorm(1 - alfa / 2)
+E <- round(zalfa_sobre_2, 2) * s / sqrt(n)
+ic_inf <- Xbarra - E
+ic_sup <- Xbarra + E
+ic3 <- cbind(ic_inf, ic_sup); ic3
+
+# Exemplo 4: IC para média (sigma desconhecido, n < 30, usar t)
+n <- 9
+Xbarra <- 6
+alfa <- 0.05
+s <- 3
+talfa_sobre_2 <- qt(1 - alfa / 2, df = n-1)
+E <- round(talfa_sobre_2, 2) * s / sqrt(n)
+ic_inf <- Xbarra - E
+ic_sup <- Xbarra + E
+ic4 <- paste(round(ic_inf,2), round(ic_sup,2)); ic4
+
+# Exemplo 5: IC para proporção
+n <- 1600
+pchapeu <- 160 / 1600
+qchapeu <- 1 - pchapeu
+alfa <- 0.05
+sigma <- sqrt((pchapeu * qchapeu) / n)
+zalfa_sobre_2 <- qnorm(1 - alfa/2)
+E <- round(zalfa_sobre_2, 2) * sigma
+ic_inf <- pchapeu - E
+ic_sup <- pchapeu + E
+ic5 <- cbind(ic_inf, ic_sup); ic5
+
+# Exemplo 6: Tamanho da amostra para estimar média, sigma conhecido
+alfa <- 0.05
+sigma <- 5
+E <- 0.1
+zalfa_sobre_2 <- qnorm(1 - alfa/2)
+n6 <- (round(zalfa_sobre_2,2)^2 * sigma^2) / E^2
+n6
+
+# Exemplo 7: Tamanho da amostra para proporção, p conhecido
+alfa <- 0.05
+p <- 0.20
+q <- 1 - p
+E <- 0.03
+zalfa_sobre_2 <- qnorm(1 - alfa/2)
+# z/E ≈ 65, mas manter fórmula para ajustar se necessário
+n7 <- ((round(zalfa_sobre_2,2))^2 * p * q ) / E^2
+n7
+
+# Exemplo 8: Tamanho da amostra para proporção, p desconhecido
+alfa <- 0.05
+E <- 0.1
+zalfa_sobre_2 <- qnorm(1 - alfa/2)
+# Máxima variância para p desconhecido é 1/4
+n8 <- ( round(zalfa_sobre_2,1)^2 * 0.25 ) / E^2
+n8
