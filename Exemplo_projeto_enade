@@ -1,0 +1,198 @@
+---
+title: "Disciplina: Estatística para Ciência de dados"
+author: "Thiago Marques"
+date: "17/09/2025"
+output: rmdformats::readthedown
+highlight: kate
+css: StyleClube.css
+---
+
+# Setup Inicial -----------------------------------------------------------------
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+knitr::opts_knit$set(root.dir = "colocar caminho")
+
+# Carregando Pacotes ------------------------------------------------------------
+vetor_pacotes <- c(
+  "readr", "ggplot2", "rmdformats", "plotly", "e1071", "dplyr", 
+  "Hmisc", "DescTools", "esquisse", "kableExtra", "gridExtra", "devtools"
+)
+# install.packages(vetor_pacotes)
+invisible(lapply(vetor_pacotes, require, character.only = TRUE))
+
+# Importação e Pré-processamento ------------------------------------------------
+enade2017 <- read_csv2("MICRODADOS_ENADE_2017.txt") 
+
+microdados_enade_filtrados <- enade2017 %>% 
+  select(
+    CO_GRUPO, CO_REGIAO_CURSO, NU_IDADE, TP_SEXO, CO_TURNO_GRADUACAO, NT_GER,
+    QE_I01, QE_I02, QE_I08, QE_I21, QE_I23, NT_OBJ_FG, NT_OBJ_CE
+  )
+
+microdados_ti <- microdados_enade_filtrados %>% filter(CO_GRUPO == 72)
+
+# Transformação das Variáveis ---------------------------------------------------
+microdados_ti <- microdados_ti %>%
+  mutate(
+    estado_civil2 = case_when(
+      QE_I01 == "A" ~ "Solteiro(a)",
+      QE_I01 == "B" ~ "Casado(a)",
+      QE_I01 == "C" ~ "Separado(a)",
+      QE_I01 == "D" ~ "Viúvo(a)",
+      QE_I01 == "E" ~ "Outro"
+    ),
+    regiao = case_when(
+      CO_REGIAO_CURSO == 1 ~ "Norte",
+      CO_REGIAO_CURSO == 2 ~ "Nordeste",
+      CO_REGIAO_CURSO == 3 ~ "Sudeste",
+      CO_REGIAO_CURSO == 4 ~ "Sul",
+      CO_REGIAO_CURSO == 5 ~ "Centro-Oeste"
+    ),
+    sexo = case_when(
+      TP_SEXO == "M" ~ "Masculino",
+      TP_SEXO == "F" ~ "Feminino"
+    ),
+    hestudos = case_when(
+      QE_I23 == "A" ~ "Nenhuma, apenas assisto as aulas",
+      QE_I23 == "B" ~ "De uma a três",
+      QE_I23 == "C" ~ "De quatro a sete",
+      QE_I23 == "D" ~ "De oito a doze",
+      QE_I23 == "E" ~ "Mais de doze"
+    )
+  )
+
+# Qualidade dos Dados -----------------------------------------------------------
+resumo_nas <- microdados_ti %>% summarise_all(~sum(is.na(.)))
+microdados_ti_sem_NA <- microdados_ti %>% na.omit()
+resumo_nas_sem_na <- microdados_ti_sem_NA %>% summarise_all(~sum(is.na(.)))
+resumo_nas_sem_na %>% kbl %>% kable_material_dark(full_width = F)
+
+# Estatísticas Descritivas ------------------------------------------------------
+microdados_ti_sem_NA %>%
+  summarise(
+    quantidade = n(),
+    media = mean(NT_OBJ_CE),
+    mediana = median(NT_OBJ_CE),
+    moda = Mode(NT_OBJ_CE),
+    cv = sd(NT_OBJ_CE) / media * 100,
+    assimetria = skewness(NT_OBJ_CE),
+    curtose = kurtosis(NT_OBJ_CE)
+  ) %>%
+  kbl %>% kable_material_dark(full_width = F)
+summary(microdados_ti_sem_NA$NT_OBJ_CE)
+
+# Gráficos Descritivos ----------------------------------------------------------
+g_hist <- ggplot(microdados_ti_sem_NA, aes(x = NT_OBJ_CE)) + 
+  geom_histogram(color = "black", fill = "lightblue", bins = 50, aes(y = ..count../sum(..count..))) +
+  ggtitle("Histograma da nota dos alunos de ADS") +
+  xlab("Nota") +
+  ylab("Frequência relativa")
+
+g_densidade <- ggplot(microdados_ti_sem_NA, aes(x = NT_OBJ_CE)) +
+  geom_density(col = 2, size = 1, aes(y = 27 * ..count../sum(..count..))) +
+  ggtitle("Curva de densidade da nota dos alunos de ADS") +
+  xlab("Nota dos alunos de ADS") +
+  ylab("Frequência relativa")
+
+g_hist_densidade <- ggplot(microdados_ti_sem_NA, aes(x = NT_OBJ_CE)) +
+  geom_histogram(color = "black", fill = "lightblue", bins = 50, aes(y = ..count../sum(..count..))) +
+  geom_density(col = 2, size = 1, aes(y = 27 * ..count../sum(..count..))) +
+  ggtitle("Histograma e curva de densidade da nota dos alunos de ADS") +
+  xlab("Nota dos alunos de ADS") +
+  ylab("Frequência relativa")
+
+grid.arrange(g_hist, g_densidade, g_hist_densidade, nrow = 3)
+
+# Médias por Sexo e Estado Civil ------------------------------------------------
+microdados_ti_mod2 <- microdados_ti_sem_NA %>% 
+  group_by(sexo, estado_civil2) %>% 
+  summarise(
+    quantidade = n(),
+    media = mean(NT_GER),
+    mediana = median(NT_GER),
+    cv = sd(NT_GER)/media*100,
+    amplitude_interquartil = IQR(NT_GER),
+    .groups = 'drop'
+  ) %>%
+  arrange(desc(mediana))
+microdados_ti_mod2 %>% kbl %>% kable_material_dark(full_width = F)
+
+# Tabulação Cruzada -------------------------------------------------------------
+table(microdados_ti_sem_NA$estado_civil2, microdados_ti_sem_NA$sexo) %>%
+  kbl %>% kable_material_dark(full_width = F)
+prop.table(table(microdados_ti_sem_NA$estado_civil2, microdados_ti_sem_NA$sexo)) %>%
+  kbl %>% kable_material_dark(full_width = F)
+
+# Estatísticas por Estado Civil -------------------------------------------------
+dados_casados <- microdados_ti_sem_NA %>% 
+  group_by(estado_civil2) %>% 
+  summarise(
+    quantidade = n(),
+    media = mean(NT_GER),
+    mediana = median(NT_GER),
+    cv = sd(NT_GER)/media*100,
+    amplitude_interquartil = IQR(NT_GER),
+    assimetria = skewness(NT_GER),
+    curtose = kurtosis(NT_GER),
+    .groups = 'drop'
+  ) %>%
+  arrange(desc(cv))
+dados_casados %>% kbl %>% kable_material_dark(full_width = F)
+
+# Gráficos: Sexo x Estado Civil -------------------------------------------------
+grafico_histograma1 <- ggplot(microdados_ti_sem_NA, aes(x = NT_GER, fill = estado_civil2)) + 
+  geom_histogram() +
+  ggtitle("Histograma da Nota por Estado Civil") +
+  facet_grid(~estado_civil2)
+ggplotly(grafico_histograma1)
+
+grafico_boxplot1 <- ggplot(microdados_ti_sem_NA, aes(x = estado_civil2, y = NT_GER, fill = estado_civil2)) + 
+  geom_boxplot() +
+  ggtitle("Boxplot da Nota por Estado Civil e Sexo") +
+  facet_grid(~sexo) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+ggplotly(grafico_boxplot1)
+
+# Médias por Sexo e Região ------------------------------------------------------
+microdados_ti_mod3 <- microdados_ti_sem_NA %>% 
+  group_by(sexo, regiao) %>% 
+  summarise(
+    quantidade = n(),
+    media = mean(NT_GER),
+    mediana = median(NT_GER),
+    cv = sd(NT_GER)/media*100,
+    amplitude_interquartil = IQR(NT_GER),
+    assimetria = skewness(NT_GER),
+    curtose = kurtosis(NT_GER),
+    .groups = 'drop'
+  ) %>%
+  arrange(desc(media))
+microdados_ti_mod3 %>% kbl %>% kable_material_dark(full_width = F)
+
+table(microdados_ti_sem_NA$regiao, microdados_ti_sem_NA$sexo) %>%
+  kbl %>% kable_material_dark(full_width = F)
+prop.table(table(microdados_ti_sem_NA$regiao, microdados_ti_sem_NA$sexo)) %>%
+  kbl %>% kable_material_dark(full_width = F)
+
+# Gráficos: Sexo x Região -------------------------------------------------------
+grafico_histograma2 <- ggplot(microdados_ti_sem_NA, aes(x = NT_GER, fill = regiao)) + 
+  geom_histogram() +
+  ggtitle("Histograma da Nota por Região e Sexo") +
+  facet_grid(~sexo)
+ggplotly(grafico_histograma2)
+
+grafico_boxplot2 <- ggplot(microdados_ti_sem_NA, aes(x = regiao, y = NT_GER, fill = regiao)) + 
+  geom_boxplot() +
+  ggtitle("Boxplot da Nota por Região e Sexo") +
+  facet_grid(~sexo) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+ggplotly(grafico_boxplot2)
+
+# Consolidando Gráficos ---------------------------------------------------------
+grid.arrange(
+  grafico_histograma1,
+  grafico_boxplot1,
+  grafico_histograma2,
+  grafico_boxplot2,
+  nrow = 2, ncol = 2
+)
+
