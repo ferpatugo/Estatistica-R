@@ -1,7 +1,7 @@
 
 vetor_pacotes <- c(
   "dplyr",
-  "kableExtra",
+  "kableExtra"
 )
 # install.packages(vetor_pacotes)  # Instala todos de uma vez, se necessário
 
